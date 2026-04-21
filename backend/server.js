@@ -37,7 +37,7 @@ app.use(
 );
 
 app.get("/", (req, res) => {
-  res.send("Subscribe To My Channel!");
+  res.send("Enea Zeqo-Teme Diplome MSC!");
 });
 
 app.post("/api/signup", async (req, res) => {
