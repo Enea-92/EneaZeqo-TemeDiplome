@@ -10,10 +10,8 @@ import cors from "cors";
 dotenv.config();
 
 const app = express();
-
 const PORT = process.env.PORT || 5000;
 
-// Middlewares
 app.use(express.json());
 app.use(cookieParser());
 
@@ -36,49 +34,44 @@ app.use(
   })
 );
 
+const authenticate = (req, res, next) => {
+  const { token } = req.cookies;
+  if (!token) return res.status(401).json({ message: "No token provided." });
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    return res.status(401).json({ message: "Invalid or expired token." });
+  }
+};
+
 app.get("/", (req, res) => {
   res.send("Enea Zeqo-Teme Diplome MSC!");
 });
 
 app.post("/api/signup", async (req, res) => {
   const { username, email, password } = req.body;
-
   try {
-    if (!username || !email || !password) {
+    if (!username || !email || !password)
       throw new Error("All fields are required!");
-    }
 
     const [emailExists, usernameExists] = await Promise.all([
       User.findOne({ email }),
       User.findOne({ username }),
     ]);
 
-    if (emailExists) {
+    if (emailExists)
       return res.status(400).json({ message: "User already exists." });
-    }
-
-    if (usernameExists) {
-      return res
-        .status(400)
-        .json({ message: "Username is taken, try another name." });
-    }
+    if (usernameExists)
+      return res.status(400).json({ message: "Username is taken, try another name." });
 
     const hashedPassword = await bcryptjs.hash(password, 10);
+    const userDoc = await User.create({ username, email, password: hashedPassword });
 
-    const userDoc = await User.create({
-      username,
-      email,
-      password: hashedPassword,
-    });
-
-    if (!userDoc) {
+    if (!userDoc)
       return res.status(500).json({ message: "Failed to create user." });
-    }
 
-    const token = jwt.sign({ id: userDoc._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
+    const token = jwt.sign({ id: userDoc._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.cookie("token", token, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -87,10 +80,7 @@ app.post("/api/signup", async (req, res) => {
     });
 
     const { password: _pw, ...safeUser } = userDoc.toObject();
-
-    return res
-      .status(201)
-      .json({ user: safeUser, message: "User created successfully." });
+    return res.status(201).json({ user: safeUser, message: "User created successfully." });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -98,22 +88,16 @@ app.post("/api/signup", async (req, res) => {
 
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
-
   try {
     const userDoc = await User.findOne({ username });
-    if (!userDoc) {
+    if (!userDoc)
       return res.status(400).json({ message: "Invalid credentials." });
-    }
 
     const isPasswordValid = bcryptjs.compareSync(password, userDoc.password);
-    if (!isPasswordValid) {
+    if (!isPasswordValid)
       return res.status(400).json({ message: "Invalid credentials." });
-    }
 
-    const token = jwt.sign({ id: userDoc._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
+    const token = jwt.sign({ id: userDoc._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.cookie("token", token, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -122,35 +106,21 @@ app.post("/api/login", async (req, res) => {
     });
 
     const { password: _pw, ...safeUser } = userDoc.toObject();
-
-    return res
-      .status(200)
-      .json({ user: safeUser, message: "Logged in successfully." });
+    return res.status(200).json({ user: safeUser, message: "Logged in successfully." });
   } catch (error) {
-    console.log("Error Logging in: ", error.message);
     res.status(400).json({ message: error.message });
   }
 });
 
 app.get("/api/fetch-user", async (req, res) => {
   const { token } = req.cookies;
-
-  if (!token) {
-    return res.status(401).json({ message: "No token provided." });
-  }
-
+  if (!token) return res.status(401).json({ message: "No token provided." });
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     const userDoc = await User.findById(decoded.id).select("-password");
-
-    if (!userDoc) {
-      return res.status(400).json({ message: "No user found." });
-    }
-
+    if (!userDoc) return res.status(400).json({ message: "No user found." });
     res.status(200).json({ user: userDoc });
   } catch (error) {
-    console.log("Error in fetching user: ", error.message);
     return res.status(401).json({ message: "Invalid or expired token." });
   }
 });
@@ -162,6 +132,43 @@ app.post("/api/logout", async (req, res) => {
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   });
   res.status(200).json({ message: "Logged out successfully" });
+});
+
+app.post("/api/watchlist/add", authenticate, async (req, res) => {
+  const { movieId, title, poster_path } = req.body;
+  try {
+    const user = await User.findById(req.user.id);
+    const alreadyAdded = user.watchlist.some((m) => m.movieId === movieId);
+    if (alreadyAdded)
+      return res.status(400).json({ message: "Movie already in watchlist." });
+
+    user.watchlist.push({ movieId, title, poster_path });
+    await user.save();
+    res.status(200).json({ watchlist: user.watchlist, message: "Added to watchlist." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.post("/api/watchlist/remove", authenticate, async (req, res) => {
+  const { movieId } = req.body;
+  try {
+    const user = await User.findById(req.user.id);
+    user.watchlist = user.watchlist.filter((m) => m.movieId !== movieId);
+    await user.save();
+    res.status(200).json({ watchlist: user.watchlist, message: "Removed from watchlist." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.get("/api/watchlist", authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("watchlist");
+    res.status(200).json({ watchlist: user.watchlist });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 connectToDB().then(() => {

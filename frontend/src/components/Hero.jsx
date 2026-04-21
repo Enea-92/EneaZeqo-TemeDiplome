@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Bookmark, Play } from 'lucide-react'
+import { useAuthStore } from '../store/authStore'
+import toast from 'react-hot-toast'
 
 const options = {
   method: 'GET',
@@ -14,6 +16,7 @@ const Hero = () => {
   const [trailerKey, setTrailerKey] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { addToWatchlist, user } = useAuthStore();
 
   useEffect(() => {
     const fetchMovie = async () => {
@@ -49,6 +52,19 @@ const Hero = () => {
     fetchMovie();
   }, []);
 
+  const handleSave = async () => {
+    if (!user) {
+      toast.error('Sign in to save movies!');
+      return;
+    }
+    const result = await addToWatchlist(movie.id, movie.title, movie.poster_path);
+    if (result.success) {
+      toast.success('Added to watchlist!');
+    } else {
+      toast.error(result.message);
+    }
+  };
+
   if (loading) {
     return (
       <div className='flex items-center justify-center h-[480px] bg-gray-900 rounded-2xl' data-testid="hero-loading">
@@ -74,7 +90,6 @@ const Hero = () => {
         data-testid="hero-image"
       />
 
-      {/* Movie Info Overlay */}
       <div className='absolute bottom-0 left-0 right-0 p-4 md:p-10 bg-gradient-to-t from-black/80 to-transparent rounded-b-2xl'>
         <h2 className='text-2xl md:text-4xl font-bold mb-2' data-testid="hero-title">{movie.title}</h2>
         <p className='text-sm md:text-base text-gray-300 mb-4 line-clamp-2 max-w-2xl' data-testid="hero-overview">
@@ -83,6 +98,7 @@ const Hero = () => {
         
         <div className='flex space-x-2 md:space-x-4 font-medium'>
           <button 
+            onClick={handleSave}
             className='flex justify-center items-center bg-white hover:bg-gray-200 text-[#e50914] py-3 px-4 rounded-full cursor-pointer text-sm md:text-base transition-colors'
             data-testid="save-button"
           >
