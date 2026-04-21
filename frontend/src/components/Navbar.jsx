@@ -1,4 +1,4 @@
-import { HelpCircle, LogOut, Search, Settings } from "lucide-react";
+import { Bookmark, HelpCircle, LogOut, Search, Settings } from "lucide-react";
 import Logo from "../assets/Gemini_Generated.png";
 import { Link } from "react-router";
 import { useAuthStore } from "../store/authStore";
@@ -80,6 +80,13 @@ const Navbar = () => {
                   </span>
                   <span className="text-xs text-gray-400">{user.email}</span>
                 </div>
+
+                <Link to="/watchlist" onClick={() => setShowMenu(false)}>
+                  <button className="flex items-center w-full px-4 py-3 rounded-lg text-white bg-[#181818] hover:bg-[#1d1c1c] gap-3 cursor-pointer">
+                    <Bookmark className="w-5 h-5" />
+                    My Watchlist
+                  </button>
+                </Link>
 
                 <button className="flex items-center px-4 py-3 rounded-lg text-white bg-[#181818] hover:bg-[#1d1c1c] gap-3 cursor-pointer">
                   <HelpCircle className="w-5 h-5" />
