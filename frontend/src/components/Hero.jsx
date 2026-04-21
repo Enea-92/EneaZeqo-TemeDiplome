@@ -11,6 +11,7 @@ const options = {
 
 const Hero = () => {
   const [movie, setMovie] = useState(null);
+  const [trailerKey, setTrailerKey] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -22,7 +23,18 @@ const Hero = () => {
         
         if (data.results && data.results.length > 0) {
           const randomIndex = Math.floor(Math.random() * data.results.length);
-          setMovie(data.results[randomIndex]);
+          const selected = data.results[randomIndex];
+          setMovie(selected);
+
+          const videoRes = await fetch(
+            `https://api.themoviedb.org/3/movie/${selected.id}/videos?language=en-US`,
+            options
+          );
+          const videoData = await videoRes.json();
+          const trailer = videoData.results?.find(
+            (vid) => vid.site === 'YouTube' && vid.type === 'Trailer'
+          );
+          setTrailerKey(trailer?.key || null);
         } else {
           setError('No movies found');
         }
@@ -81,6 +93,7 @@ const Hero = () => {
           <button 
             className='flex justify-center items-center bg-[#e50914] hover:bg-[#b8070f] text-white py-3 px-4 rounded-full cursor-pointer text-sm md:text-base transition-colors'
             data-testid="watch-button"
+            onClick={() => window.open(`https://www.youtube.com/watch?v=${trailerKey}`, '_blank')}
           >
             <Play className='mr-2 w-4 h-5 md:w-5 md:h-5' />
             Watch Now
@@ -92,5 +105,3 @@ const Hero = () => {
 }
 
 export default Hero
-
-
