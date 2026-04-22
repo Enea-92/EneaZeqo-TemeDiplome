@@ -10,8 +10,12 @@ import { useEffect } from "react";
 import AIRecommendations from "./pages/AIRecommendations";
 import MoviesPage from "./pages/MoviesPage";
 import SearchPage from "./pages/SearchPage";
+import { useServerWakeup } from "./hooks/useServerWakeup";
 
+
+  
 function App() {
+  useServerWakeup();
   const { fetchUser, fetchingUser } = useAuthStore();
 
   useEffect(() => {

@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 const fetchWithRetry = async (url, options, retries = 4) => {
   for (let attempt = 1; attempt <= retries; attempt++) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
       const res = await fetch(url, { ...options, signal: controller.signal });
