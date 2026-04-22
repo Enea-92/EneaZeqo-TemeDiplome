@@ -25,7 +25,7 @@ const CardList = ({ title, category }) => {
       options
     )
       .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch movies');
+        if (!res.ok) throw new Error("Failed to fetch movies");
         return res.json();
       })
       .then((res) => {
@@ -59,7 +59,11 @@ const CardList = ({ title, category }) => {
 
   return (
     <div className="text-white md:px-4">
-      <h2 className="pt-10 pb-5 text-lg font-medium">{title}</h2>
+      <Link to={`/movies/${category}`}>
+        <h2 className="pt-10 pb-5 text-lg font-medium hover:text-[#e50914] transition cursor-pointer inline-block">
+          {title} <span className="text-sm text-gray-400 hover:text-[#e50914]">→</span>
+        </h2>
+      </Link>
 
       <Swiper slidesPerView={"auto"} spaceBetween={10} className="mySwiper">
         {data.map((item) => (
