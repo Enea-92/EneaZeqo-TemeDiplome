@@ -77,15 +77,15 @@ const RecommendedMovies = ({ movieTitles }) => {
             </div>
           )}
           <div className="p-3">
-            <h3 className="text-sm font-semibold truncate group-hover:text-[#e50914] transition">
+            <h3 className="text-sm font-semibold truncate text-white group-hover:text-[#e50914] transition">
               {movie.title}
             </h3>
             <div className="flex items-center justify-between mt-1">
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-300 font-medium">
                 {movie.release_date?.slice(0, 4) || "N/A"}
               </span>
               {movie.vote_average > 0 && (
-                <span className="text-xs text-yellow-400 font-medium">
+                <span className="text-xs text-yellow-400 font-semibold">
                   ⭐ {movie.vote_average?.toFixed(1)}
                 </span>
               )}
