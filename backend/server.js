@@ -12,7 +12,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173", credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -52,7 +52,7 @@ app.post("/api/signup", async (req, res) => {
       return res.status(400).json({ message: "Username already taken." });
 
     const hashedPassword = await bcryptjs.hash(password, 10);
-    const userDoc = await User.create({ username, email, password: hashedPassword, watchlist: [] });
+    const userDoc = await User.create({ username, email, password: hashedPassword });
 
     const token = jwt.sign({ id: userDoc._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
@@ -118,81 +118,6 @@ app.get("/api/fetch-user", authenticate, async (req, res) => {
 app.post("/api/logout", (req, res) => {
   res.clearCookie("token");
   res.json({ message: "Logged out successfully" });
-});
-
-
-/* GET WATCHLIST */
-app.get("/api/watchlist", authenticate, async (req, res) => {
-  try {
-    const user = await User.findById(req.userId).select("watchlist");
-    if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({ watchlist: user.watchlist || [] });
-  } catch (err) {
-    console.error("Get watchlist error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-/* ADD TO WATCHLIST */
-app.post("/api/watchlist/add", authenticate, async (req, res) => {
-  try {
-    const { movieId, title, poster_path } = req.body;
-    const numericMovieId = Number(movieId);
-
-    if (!numericMovieId || !title) {
-      return res.status(400).json({ message: "Movie ID and title are required" });
-    }
-
-    const existing = await User.findOne({
-      _id: req.userId,
-      "watchlist.movieId": numericMovieId,
-    });
-
-    if (existing) {
-      return res.status(400).json({ message: "Movie already in watchlist" });
-    }
-
-    const updated = await User.findByIdAndUpdate(
-      req.userId,
-      { $push: { watchlist: { movieId: numericMovieId, title, poster_path } } },
-      { returnDocument: "after", select: "watchlist" }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json({ success: true, message: "Added to watchlist", watchlist: updated.watchlist });
-  } catch (err) {
-    console.error("Add to watchlist error:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
-
-/* REMOVE FROM WATCHLIST */
-app.delete("/api/watchlist/:movieId", authenticate, async (req, res) => {
-  try {
-    const movieId = Number(req.params.movieId);
-
-    if (isNaN(movieId)) {
-      return res.status(400).json({ message: "Invalid movie ID" });
-    }
-
-    const updated = await User.findByIdAndUpdate(
-      req.userId,
-      { $pull: { watchlist: { movieId: movieId } } },
-      { returnDocument: "after", select: "watchlist" }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json({ success: true, message: "Removed from watchlist", watchlist: updated.watchlist });
-  } catch (err) {
-    console.error("Remove from watchlist error:", err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
 });
 
 /* =========================
