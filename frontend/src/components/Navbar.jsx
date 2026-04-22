@@ -1,6 +1,6 @@
-import { Bookmark, HelpCircle, LogOut, Search, Settings } from "lucide-react";
+import { HelpCircle, LogOut, Search, Settings } from "lucide-react";
 import Logo from "../assets/Gemini_Generated.png";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -8,6 +8,8 @@ import { toast } from "react-hot-toast";
 const Navbar = () => {
   const { user, logout } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
   const avatarUrl = user
     ? `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
@@ -19,6 +21,15 @@ const Navbar = () => {
     const { message } = await logout();
     toast.success(message);
     setShowMenu(false);
+    navigate("/");
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+    }
   };
 
   return (
@@ -32,48 +43,68 @@ const Navbar = () => {
       </Link>
 
       <ul className="hidden xl:flex space-x-6">
-        <li className="cursor-pointer hover:text-[#e50914]">Home</li>
-        <li className="cursor-pointer hover:text-[#e50914]">Tv Shows</li>
-        <li className="cursor-pointer hover:text-[#e50914]">Movies</li>
-        <li className="cursor-pointer hover:text-[#e50914]">Anime</li>
-        <li className="cursor-pointer hover:text-[#e50914]">Games</li>
-        <li className="cursor-pointer hover:text-[#e50914]">New & Popular</li>
-        <li className="cursor-pointer hover:text-[#e50914]">Upcoming</li>
+        <Link to="/">
+          <li className="cursor-pointer hover:text-[#e50914] transition">
+            Home
+          </li>
+        </Link>
+
+        <Link to="/movies/top_rated">
+          <li className="cursor-pointer hover:text-[#e50914] transition">
+            Top Rated
+          </li>
+        </Link>
+
+        <Link to="/movies/popular">
+          <li className="cursor-pointer hover:text-[#e50914] transition">
+            Popular
+          </li>
+        </Link>
+
+        <Link to="/movies/upcoming">
+          <li className="cursor-pointer hover:text-[#e50914] transition">
+            Upcoming
+          </li>
+        </Link>
       </ul>
 
       <div className="flex items-center space-x-4 relative">
-        <div className="relative hidden md:inline-flex">
+        <form onSubmit={handleSearch} className="relative hidden md:inline-flex">
           <input
             type="text"
-            className="bg-[#333333] px-4 py-2 rounded-full min-w-72 pr-10 outline-none"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="bg-[#333333] px-4 py-2 rounded-full min-w-72 pr-10 outline-none focus:ring-2 focus:ring-[#e50914]"
             placeholder="Search..."
           />
-          <Search className="absolute top-2 right-4 w-5 h-5" />
-        </div>
+          <button type="submit">
+            <Search className="absolute top-2 right-4 w-5 h-5 cursor-pointer" />
+          </button>
+        </form>
 
-        <Link to={user ? "ai-recommendations" : "signin"}>
-          <button className="bg-[#e50914] px-5 py-2 text-white cursor-pointer">
+        <Link to={user ? "/ai-recommendations" : "/signin"}>
+          <button className="bg-[#e50914] px-5 py-2 text-white cursor-pointer rounded hover:bg-[#b0060f] transition">
             Get AI Movie Picks
           </button>
         </Link>
 
         {!user ? (
           <Link to={"/signin"}>
-            <button className="border border-[#333333] py-2 px-4 cursor-pointer">
+            <button className="border border-[#333333] py-2 px-4 cursor-pointer rounded hover:bg-[#333] transition">
               Sign In
             </button>
           </Link>
         ) : (
-          <div className="text-white">
+          <div className="text-white relative">
             <img
               src={avatarUrl}
-              alt=""
+              alt={user.username}
               className="w-10 h-10 rounded-full border-2 border-[#e50914] cursor-pointer"
               onClick={() => setShowMenu(!showMenu)}
             />
 
             {showMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-[#232323] bg-opacity-95 rounded-lg z-50 shadow-lg py-4 px-3 flex flex-col gap-2 border border-[#333333]">
+              <div className="absolute right-0 mt-2 w-64 bg-[#232323] rounded-lg z-50 shadow-lg py-4 px-3 flex flex-col gap-2 border border-[#333333]">
                 <div className="flex flex-col items-center mb-2">
                   <span className="text-white font-semibold text-base">
                     {user.username}
@@ -81,26 +112,19 @@ const Navbar = () => {
                   <span className="text-xs text-gray-400">{user.email}</span>
                 </div>
 
-                <Link to="/watchlist" onClick={() => setShowMenu(false)}>
-                  <button className="flex items-center w-full px-4 py-3 rounded-lg text-white bg-[#181818] hover:bg-[#1d1c1c] gap-3 cursor-pointer">
-                    <Bookmark className="w-5 h-5" />
-                    My Watchlist
-                  </button>
-                </Link>
-
-                <button className="flex items-center px-4 py-3 rounded-lg text-white bg-[#181818] hover:bg-[#1d1c1c] gap-3 cursor-pointer">
+                <button className="flex items-center px-4 py-3 rounded-lg text-white bg-[#181818] hover:bg-[#1d1c1c] gap-3">
                   <HelpCircle className="w-5 h-5" />
                   Help Center
                 </button>
 
-                <button className="flex items-center px-4 py-3 rounded-lg text-white bg-[#181818] hover:bg-[#1d1c1c] gap-3 cursor-pointer">
+                <button className="flex items-center px-4 py-3 rounded-lg text-white bg-[#181818] hover:bg-[#1d1c1c] gap-3">
                   <Settings className="w-5 h-5" />
                   Settings
                 </button>
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center px-4 py-3 rounded-lg text-white bg-[#181818] hover:bg-[#1d1c1c] gap-3 cursor-pointer"
+                  className="flex items-center px-4 py-3 rounded-lg text-white bg-[#181818] hover:bg-[#1d1c1c] gap-3"
                 >
                   <LogOut className="w-5 h-5" />
                   Log Out

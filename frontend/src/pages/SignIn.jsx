@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
 
@@ -11,12 +11,23 @@ const SignIn = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (!username || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
     try {
-      const { message } = await login(username, password);
-      toast.success(message);
-      navigate("/");
+      const result = await login(username, password);
+      if (result.success) {
+        toast.success(result.message);
+        navigate("/");
+      } else {
+        toast.error(result.message || "Login failed");
+      }
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      toast.error("An error occurred during login");
     }
   };
 
@@ -36,25 +47,25 @@ const SignIn = () => {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="username"
-            className="w-full h-[50px] bg-[#333] text-white rouded px-5 text-base"
+            placeholder="Username"
+            className="w-full h-[50px] bg-[#333] text-white rounded px-5 text-base outline-none focus:ring-2 focus:ring-[#e50914]"
           />
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="password"
-            className="w-full h-[50px] bg-[#333] text-white rouded px-5 text-base"
+            placeholder="Password"
+            className="w-full h-[50px] bg-[#333] text-white rounded px-5 text-base outline-none focus:ring-2 focus:ring-[#e50914]"
           />
 
-          {error && <p className="text-red-500">{error}</p>}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-[#e50914] text-white py-2 rounded text-base hover:opacity-90 cursor-pointer"
+            className="w-full bg-[#e50914] text-white py-2 rounded text-base hover:bg-[#b0060f] cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign In
+            {isLoading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 

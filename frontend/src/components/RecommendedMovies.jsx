@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 
 const RecommendedMovies = ({ movieTitles }) => {
   const options = {
@@ -19,10 +19,11 @@ const RecommendedMovies = ({ movieTitles }) => {
 
     try {
       const res = await fetch(url, options);
+      if (!res.ok) throw new Error('Failed to fetch movie');
       const data = await res.json();
       return data.results?.[0] || null;
     } catch (error) {
-      console.log("Error fetching movie: ", error);
+      console.error("Error fetching movie: ", error);
       return null;
     }
   };
@@ -45,7 +46,19 @@ const RecommendedMovies = ({ movieTitles }) => {
   }, [movieTitles]);
 
   if (loading) {
-    return <p>Loading...</p>;
+    return (
+      <div className="text-center py-10">
+        <p className="text-white text-lg">Loading recommendations...</p>
+      </div>
+    );
+  }
+
+  if (movies.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-gray-400">No movies found. Please try again.</p>
+      </div>
+    );
   }
 
   return (
@@ -54,16 +67,18 @@ const RecommendedMovies = ({ movieTitles }) => {
         <Link
           to={`/movie/${movie.id}`}
           key={movie.id}
-          className="bg-[#232323] rounded-lg overflow-hidden"
+          className="bg-[#232323] rounded-lg overflow-hidden hover:scale-105 transition"
         >
           {movie.poster_path ? (
             <img
               src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
-              className="w-full h-48 object-cover"
+              className="w-full h-64 object-cover"
               alt={movie.title}
             />
           ) : (
-            <>No Image</>
+            <div className="w-full h-64 bg-gray-700 flex items-center justify-center">
+              <p className="text-gray-400">No Image</p>
+            </div>
           )}
 
           <div className="p-2">

@@ -1,106 +1,124 @@
-
 import { create } from "zustand";
 import axios from "axios";
 
+/* =========================
+   🔥 AXIOS INSTANCE
+========================= */
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://eneazeqo-temediplome.onrender.com/api",
+  baseURL: "http://localhost:5000/api",
   withCredentials: true,
 });
 
+/* =========================
+   🧠 AUTH STORE
+========================= */
 export const useAuthStore = create((set) => ({
-  // initial states
   user: null,
   isLoading: false,
   error: null,
   message: null,
   fetchingUser: true,
 
-  // functions
-
+  /* ---------- SIGNUP ---------- */
   signup: async (username, email, password) => {
-    set({ isLoading: true, message: null, error: null });
+    set({ isLoading: true, error: null, message: null });
 
     try {
-      const response = await api.post("/signup", {
+      const res = await api.post("/signup", {
         username,
         email,
         password,
       });
 
-      set({ user: response.data.user, isLoading: false });
-    } catch (error) {
       set({
+        user: res.data.user,
         isLoading: false,
-        error: error.response?.data?.message || "Error signing up",
       });
 
-      throw error;
+      return { success: true, user: res.data.user };
+    } catch (err) {
+      set({
+        isLoading: false,
+        error: err.response?.data?.message || "Signup error",
+      });
+
+      return {
+        success: false,
+        message: err.response?.data?.message,
+      };
     }
   },
 
+  /* ---------- LOGIN ---------- */
   login: async (username, password) => {
-    set({ isLoading: true, message: null, error: null });
+    set({ isLoading: true, error: null, message: null });
 
     try {
-      const response = await api.post("/login", {
+      const res = await api.post("/login", {
         username,
         password,
       });
 
-      const { user, message } = response.data;
-
       set({
-        user,
-        message,
+        user: res.data.user,
+        message: res.data.message,
         isLoading: false,
       });
 
-      return { user, message };
-    } catch (error) {
+      return { success: true, user: res.data.user, message: res.data.message };
+    } catch (err) {
       set({
         isLoading: false,
-        error: error.response?.data?.message || "Error logging in",
+        error: err.response?.data?.message || "Login error",
       });
 
-      throw error;
+      return {
+        success: false,
+        message: err.response?.data?.message || "Login error",
+      };
     }
   },
 
+  /* ---------- FETCH USER ---------- */
   fetchUser: async () => {
-    set({ fetchingUser: true, error: null });
+    set({ fetchingUser: true });
 
     try {
-      const response = await api.get("/fetch-user");
-      set({ user: response.data.user, fetchingUser: false });
-    } catch (error) {
+      const res = await api.get("/fetch-user");
+
       set({
+        user: res.data.user,
         fetchingUser: false,
+      });
+    } catch (err) {
+      set({
         user: null,
+        fetchingUser: false,
       });
     }
   },
 
+  /* ---------- LOGOUT ---------- */
   logout: async () => {
-    set({ isLoading: true, error: null, message: null });
+    set({ isLoading: true });
 
     try {
-      const response = await api.post("/logout");
-      const { message } = response.data;
+      const res = await api.post("/logout");
+
       set({
-        message,
-        isLoading: false,
         user: null,
-        error: null,
+        message: res.data.message,
+        isLoading: false,
       });
 
-      return { message };
-    } catch (error) {
+      return { success: true, message: res.data.message };
+    } catch (err) {
       set({
         isLoading: false,
-        error: error.response?.data?.message || "Error logging out",
+        error: err.response?.data?.message || "Logout error",
       });
 
-      throw error;
+      return { success: false, message: "Logout error" };
     }
   },
 }));
