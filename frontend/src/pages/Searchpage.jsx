@@ -18,7 +18,8 @@ const SearchPage = () => {
       Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}`,
     },
   };
-
+  
+//
   useEffect(() => {
     setPage(1);
     setMovies([]);

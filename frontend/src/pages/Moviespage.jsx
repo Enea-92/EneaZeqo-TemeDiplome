@@ -14,7 +14,8 @@ const MoviesPage = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
+   
+  
   const meta = categoryMeta[category] || { label: "Movies", emoji: "🎬" };
 
   const options = {
