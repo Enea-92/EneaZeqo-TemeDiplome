@@ -2,18 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const fetchWithRetry = async (url, options, retries = 3) => {
+const fetchWithRetry = async (url, options, retries = 4) => {
   for (let attempt = 1; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
-      const res = await fetch(url, options);
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timeoutId);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (err) {
-      if (attempt < retries) {
-        await new Promise((r) => setTimeout(r, attempt * 1000));
-      } else {
-        throw err;
-      }
+      clearTimeout(timeoutId);
+      if (attempt === retries) throw err;
+      await new Promise((r) => setTimeout(r, Math.pow(2, attempt - 1) * 1000));
     }
   }
 };
