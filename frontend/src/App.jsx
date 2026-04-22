@@ -9,6 +9,7 @@ import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
 import AIRecommendations from "./pages/AIRecommendations";
 import MoviesPage from "./pages/MoviesPage";
+import SearchPage from "./pages/SearchPage";
 
 const App = () => {
   const { fetchUser, fetchingUser } = useAuthStore();
@@ -32,6 +33,7 @@ const App = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/ai-recommendations" element={<AIRecommendations />} />
         <Route path="/movies/:category" element={<MoviesPage />} />
+        <Route path="/search" element={<SearchPage />} />
       </Routes>
     </div>
   );
