@@ -11,7 +11,7 @@ import AIRecommendations from "./pages/AIRecommendations";
 import MoviesPage from "./pages/MoviesPage";
 import SearchPage from "./pages/SearchPage";
 
-const App = () => {
+function App() {
   const { fetchUser, fetchingUser } = useAuthStore();
 
   useEffect(() => {
@@ -37,6 +37,6 @@ const App = () => {
       </Routes>
     </div>
   );
-};
+}
 
 export default App;

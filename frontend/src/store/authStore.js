@@ -1,17 +1,12 @@
 import { create } from "zustand";
 import axios from "axios";
 
-/* =========================
-   🔥 AXIOS INSTANCE
-========================= */
 const api = axios.create({
   baseURL: "http://localhost:5000/api",
   withCredentials: true,
 });
 
-/* =========================
-   🧠 AUTH STORE
-========================= */
+
 export const useAuthStore = create((set) => ({
   user: null,
   isLoading: false,
