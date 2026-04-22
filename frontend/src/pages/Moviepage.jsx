@@ -55,9 +55,7 @@ const Moviepage = () => {
           backgroundPosition: "center top",
         }}
       >
-        {/* Full overlay — covers top too so title never bleeds into navbar */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#181818] via-[#181818]/40 to-black/60" />
-
         <div className="relative z-10 flex items-end p-6 md:p-8 gap-8 w-full">
           <img
             src={`https://image.tmdb.org/t/p/original${movie.poster_path}`}
@@ -127,21 +125,40 @@ const Moviepage = () => {
       {recommendations.length > 0 && (
         <div className="p-8">
           <h2 className="text-2xl font-semibold mb-4">You might also like...</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
             {recommendations.slice(0, 10).map((rec) => (
-              <div key={rec.id} className="bg-[#232323] rounded-lg overflow-hidden hover:scale-105 transition">
-                <Link to={`/movie/${rec.id}`}>
+              <Link
+                key={rec.id}
+                to={`/movie/${rec.id}`}
+                className="group bg-[#232323] rounded-lg overflow-hidden hover:scale-105 transition duration-200 hover:shadow-xl hover:shadow-black/50"
+              >
+                {rec.poster_path ? (
                   <img
                     src={`https://image.tmdb.org/t/p/w300${rec.poster_path}`}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-64 object-cover"
                     alt={rec.title}
                   />
-                  <div className="p-2">
-                    <h3 className="text-sm font-semibold">{rec.title}</h3>
-                    <span className="text-xs text-gray-400">{rec.release_date?.slice(0, 4)}</span>
+                ) : (
+                  <div className="w-full h-64 bg-[#2a2a2a] flex items-center justify-center">
+                    <span className="text-gray-500 text-sm">No Image</span>
                   </div>
-                </Link>
-              </div>
+                )}
+                <div className="p-3">
+                  <h3 className="text-sm font-semibold truncate group-hover:text-[#e50914] transition">
+                    {rec.title}
+                  </h3>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-xs text-gray-400">
+                      {rec.release_date?.slice(0, 4) || "N/A"}
+                    </span>
+                    {rec.vote_average > 0 && (
+                      <span className="text-xs text-yellow-400 font-medium">
+                        ⭐ {rec.vote_average?.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
