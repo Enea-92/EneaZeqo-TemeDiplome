@@ -3,6 +3,22 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import { Link } from "react-router-dom";
 
+const fetchWithRetry = async (url, options, retries = 3) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, attempt * 1000));
+      } else {
+        throw err;
+      }
+    }
+  }
+};
+
 const CardList = ({ title, category }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,21 +36,17 @@ const CardList = ({ title, category }) => {
     setLoading(true);
     setError(null);
 
-    fetch(
+    fetchWithRetry(
       `https://api.themoviedb.org/3/movie/${category}?language=en-US&page=1`,
       options
     )
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch movies");
-        return res.json();
-      })
       .then((res) => {
         setData(res.results || []);
         setLoading(false);
       })
       .catch((err) => {
         console.error(err);
-        setError(err.message);
+        setError("Failed to load. Please refresh.");
         setLoading(false);
       });
   }, [category]);
@@ -84,15 +96,15 @@ const CardList = ({ title, category }) => {
                 </div>
               )}
               <div className="p-2">
-                <h3 className="text-sm font-semibold truncate group-hover:text-[#e50914] transition">
+                <h3 className="text-sm font-semibold truncate text-white group-hover:text-[#e50914] transition">
                   {item.original_title}
                 </h3>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-300 font-medium">
                     {item.release_date?.slice(0, 4) || "N/A"}
                   </span>
                   {item.vote_average > 0 && (
-                    <span className="text-xs text-yellow-400 font-medium">
+                    <span className="text-xs text-yellow-400 font-semibold">
                       ⭐ {item.vote_average?.toFixed(1)}
                     </span>
                   )}

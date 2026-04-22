@@ -2,6 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+const fetchWithRetry = async (url, options, retries = 3) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, attempt * 1000));
+      } else {
+        throw err;
+      }
+    }
+  }
+};
+
 const Hero = () => {
   const [movie, setMovie] = useState(null);
   const [trailerKey, setTrailerKey] = useState(null);
@@ -19,27 +35,28 @@ const Hero = () => {
   useEffect(() => {
     const fetchMovie = async () => {
       try {
-        const res = await fetch('https://api.themoviedb.org/3/movie/upcoming', options);
-        if (!res.ok) throw new Error('Failed to fetch movies');
-
-        const data = await res.json();
+        const data = await fetchWithRetry(
+          'https://api.themoviedb.org/3/movie/upcoming?language=en-US&page=1',
+          options
+        );
 
         if (data.results && data.results.length > 0) {
           const randomIndex = Math.floor(Math.random() * data.results.length);
           const selected = data.results[randomIndex];
           setMovie(selected);
 
-          const videoRes = await fetch(
-            `https://api.themoviedb.org/3/movie/${selected.id}/videos?language=en-US`,
-            options
-          );
-          if (!videoRes.ok) throw new Error('Failed to fetch trailer');
-
-          const videoData = await videoRes.json();
-          const trailer = videoData.results?.find(
-            (vid) => vid.site === 'YouTube' && vid.type === 'Trailer'
-          );
-          setTrailerKey(trailer?.key || null);
+          try {
+            const videoData = await fetchWithRetry(
+              `https://api.themoviedb.org/3/movie/${selected.id}/videos?language=en-US`,
+              options
+            );
+            const trailer = videoData.results?.find(
+              (vid) => vid.site === 'YouTube' && vid.type === 'Trailer'
+            );
+            setTrailerKey(trailer?.key || null);
+          } catch {
+            setTrailerKey(null);
+          }
         } else {
           setError('No movies found');
         }
@@ -79,8 +96,6 @@ const Hero = () => {
       />
 
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-10 bg-gradient-to-t from-black/90 to-transparent rounded-b-2xl">
-
-        {/* Rating */}
         <div className="flex items-center gap-3 mb-2">
           <span className="text-yellow-400 font-semibold text-sm">
             ⭐ {movie.vote_average?.toFixed(1)}
@@ -88,7 +103,6 @@ const Hero = () => {
           <span className="text-gray-400 text-sm">{movie.release_date?.slice(0, 4)}</span>
         </div>
 
-        {/* Title — clickable */}
         <Link to={`/movie/${movie.id}`}>
           <h2 className="text-2xl md:text-4xl font-bold mb-2 hover:text-[#e50914] transition cursor-pointer">
             {movie.title}
