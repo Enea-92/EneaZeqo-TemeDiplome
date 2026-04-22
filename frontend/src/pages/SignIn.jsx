@@ -71,7 +71,7 @@ const SignIn = () => {
 
         <div className="mt-10 text-[#737373] text-sm">
           <p>
-            New to Netflix?{" "}
+            New to Page?{" "}
             <span
               onClick={() => navigate("/signup")}
               className="text-white font-medium cursor-pointer ml-2 hover:underline"

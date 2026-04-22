@@ -35,11 +35,11 @@ const Navbar = () => {
   return (
     <nav className="bg-black text-gray-200 flex justify-between items-center p-4 h-20 text-sm md:text-[15px] font-medium text-nowrap">
       <Link to={"/"}>
-        <img
-          src={Logo}
-          alt="Logo"
-          className="w-24 cursor-pointer brightness-125"
-        />
+<img
+  src={Logo}
+  alt="Logo"
+  className="w-80 h-20 object-contain cursor-pointer brightness-125"
+/>
       </Link>
 
       <ul className="hidden xl:flex space-x-6">
