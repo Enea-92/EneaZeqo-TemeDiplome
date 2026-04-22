@@ -32,15 +32,22 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.warn(`CORS blocked: ${origin}`);
         callback(new Error(`CORS blocked: ${origin}`));
       }
     },
     credentials: true,
   })
 );
+
+// Keep-alive ping endpoint — UptimeRobot or any cron pings this every 5 min
+app.get("/ping", (req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 app.get("/", (req, res) => {
   res.send("Enea Zeqo-Teme Diplome!");
