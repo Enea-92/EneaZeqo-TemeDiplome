@@ -19,7 +19,7 @@ const RecommendedMovies = ({ movieTitles }) => {
 
     try {
       const res = await fetch(url, options);
-      if (!res.ok) throw new Error('Failed to fetch movie');
+      if (!res.ok) throw new Error("Failed to fetch movie");
       const data = await res.json();
       return data.results?.[0] || null;
     } catch (error) {
@@ -31,11 +31,7 @@ const RecommendedMovies = ({ movieTitles }) => {
   useEffect(() => {
     const loadMovies = async () => {
       setLoading(true);
-
-      const results = await Promise.all(
-        movieTitles.map((title) => fetchMovie(title))
-      );
-
+      const results = await Promise.all(movieTitles.map((title) => fetchMovie(title)));
       setMovies(results.filter(Boolean));
       setLoading(false);
     };
@@ -62,12 +58,12 @@ const RecommendedMovies = ({ movieTitles }) => {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
       {movies.map((movie) => (
         <Link
           to={`/movie/${movie.id}`}
           key={movie.id}
-          className="bg-[#232323] rounded-lg overflow-hidden hover:scale-105 transition"
+          className="group bg-[#232323] rounded-lg overflow-hidden hover:scale-105 transition duration-200 hover:shadow-xl hover:shadow-black/50"
         >
           {movie.poster_path ? (
             <img
@@ -76,18 +72,24 @@ const RecommendedMovies = ({ movieTitles }) => {
               alt={movie.title}
             />
           ) : (
-            <div className="w-full h-64 bg-gray-700 flex items-center justify-center">
-              <p className="text-gray-400">No Image</p>
+            <div className="w-full h-64 bg-[#2a2a2a] flex items-center justify-center">
+              <span className="text-gray-500 text-sm">No Image</span>
             </div>
           )}
-
-          <div className="p-2">
-            <h3 className="text-sm font-semibold text-white truncate">
+          <div className="p-3">
+            <h3 className="text-sm font-semibold truncate group-hover:text-[#e50914] transition">
               {movie.title}
             </h3>
-            <p className="text-xs text-gray-400">
-              {movie.release_date ? movie.release_date.slice(0, 4) : "N/A"}
-            </p>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-xs text-gray-400">
+                {movie.release_date?.slice(0, 4) || "N/A"}
+              </span>
+              {movie.vote_average > 0 && (
+                <span className="text-xs text-yellow-400 font-medium">
+                  ⭐ {movie.vote_average?.toFixed(1)}
+                </span>
+              )}
+            </div>
           </div>
         </Link>
       ))}

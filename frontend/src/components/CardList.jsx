@@ -65,16 +65,39 @@ const CardList = ({ title, category }) => {
         </h2>
       </Link>
 
-      <Swiper slidesPerView={"auto"} spaceBetween={10} className="mySwiper">
+      <Swiper slidesPerView={"auto"} spaceBetween={12} className="mySwiper">
         {data.map((item) => (
-          <SwiperSlide key={item.id} className="max-w-72">
-            <Link to={`/movie/${item.id}`}>
-              <img
-                src={`https://image.tmdb.org/t/p/w500/${item.backdrop_path}`}
-                alt={item.original_title}
-                className="h-44 w-full object-center object-cover rounded"
-              />
-              <p className="text-center pt-2">{item.original_title}</p>
+          <SwiperSlide key={item.id} style={{ width: "160px" }}>
+            <Link
+              to={`/movie/${item.id}`}
+              className="group block bg-[#232323] rounded-lg overflow-hidden hover:scale-105 transition duration-200 hover:shadow-xl hover:shadow-black/50"
+            >
+              {item.poster_path ? (
+                <img
+                  src={`https://image.tmdb.org/t/p/w300${item.poster_path}`}
+                  alt={item.original_title}
+                  className="w-full h-56 object-cover"
+                />
+              ) : (
+                <div className="w-full h-56 bg-[#2a2a2a] flex items-center justify-center">
+                  <span className="text-gray-500 text-sm">No Image</span>
+                </div>
+              )}
+              <div className="p-2">
+                <h3 className="text-sm font-semibold truncate group-hover:text-[#e50914] transition">
+                  {item.original_title}
+                </h3>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-xs text-gray-400">
+                    {item.release_date?.slice(0, 4) || "N/A"}
+                  </span>
+                  {item.vote_average > 0 && (
+                    <span className="text-xs text-yellow-400 font-medium">
+                      ⭐ {item.vote_average?.toFixed(1)}
+                    </span>
+                  )}
+                </div>
+              </div>
             </Link>
           </SwiperSlide>
         ))}
