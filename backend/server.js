@@ -1,7 +1,7 @@
 import express from "express";
 import { connectToDB } from "./config/db.js";
 import dotenv from "dotenv";
-import User from "./models/User.model.js";
+import User from "./models/user.model.js";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 /* =========================
-   🔐 AUTH MIDDLEWARE
+   MIDDLEWARE
 ========================= */
 const authenticate = (req, res, next) => {
   const token = req.cookies?.token;
@@ -32,9 +32,6 @@ const authenticate = (req, res, next) => {
   }
 };
 
-/* =========================
-   🌐 ROUTES
-========================= */
 app.get("/", (req, res) => res.send("Server running..."));
 
 /* ---------- SIGNUP ---------- */
@@ -123,9 +120,6 @@ app.post("/api/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-/* =========================
-   🎬 WATCHLIST
-========================= */
 
 /* GET WATCHLIST */
 app.get("/api/watchlist", authenticate, async (req, res) => {
