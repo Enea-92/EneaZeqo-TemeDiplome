@@ -46,25 +46,27 @@ const Moviepage = () => {
 
   return (
     <div className="min-h-screen bg-[#181818] text-white">
+      {/* Backdrop */}
       <div
         className="relative h-[60vh] flex items-end"
         style={{
           backgroundImage: `url(https://image.tmdb.org/t/p/original${movie.backdrop_path})`,
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: "center top",
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#181818] via-transparent to-transparent"></div>
+        {/* Full overlay — covers top too so title never bleeds into navbar */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#181818] via-[#181818]/40 to-black/60" />
 
-        <div className="relative z-10 flex items-end p-8 gap-8">
+        <div className="relative z-10 flex items-end p-6 md:p-8 gap-8 w-full">
           <img
             src={`https://image.tmdb.org/t/p/original${movie.poster_path}`}
-            className="rounded-lg shadow-lg w-48 hidden md:block"
+            className="rounded-lg shadow-lg w-48 hidden md:block flex-shrink-0"
             alt={movie.title}
           />
-          <div>
-            <h1 className="text-4xl font-bold mb-2">{movie.title}</h1>
-            <div className="flex items-center gap-4 mb-2">
+          <div className="w-full">
+            <h1 className="text-2xl md:text-4xl font-bold mb-2 leading-tight">{movie.title}</h1>
+            <div className="flex items-center gap-4 mb-2 text-sm md:text-base flex-wrap">
               <span>⭐ {movie.vote_average?.toFixed(1)}</span>
               <span>{movie.release_date}</span>
               <span>{movie.runtime} min</span>
@@ -76,7 +78,9 @@ const Moviepage = () => {
                 </span>
               ))}
             </div>
-            <p className="max-w-2xl text-gray-200">{movie.overview}</p>
+            <p className="max-w-2xl text-gray-200 text-sm md:text-base line-clamp-3 md:line-clamp-none">
+              {movie.overview}
+            </p>
             <div className="flex gap-3 mt-4">
               {trailerKey ? (
                 <a href={`https://www.youtube.com/watch?v=${trailerKey}`} target="_blank" rel="noreferrer">
@@ -94,6 +98,7 @@ const Moviepage = () => {
         </div>
       </div>
 
+      {/* Details */}
       <div className="p-8">
         <h2 className="text-2xl font-semibold mb-4">Details</h2>
         <div className="bg-[#232323] rounded-lg shadow-lg p-6 flex flex-col md:flex-row gap-8">
@@ -118,6 +123,7 @@ const Moviepage = () => {
         </div>
       </div>
 
+      {/* Recommendations */}
       {recommendations.length > 0 && (
         <div className="p-8">
           <h2 className="text-2xl font-semibold mb-4">You might also like...</h2>
