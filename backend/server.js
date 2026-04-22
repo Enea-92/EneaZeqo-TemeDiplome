@@ -11,125 +11,120 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const isProduction = process.env.NODE_ENV === "production";
 
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173", credentials: true }));
-app.use(express.json());
-app.use(cookieParser());
-
-/* =========================
-   MIDDLEWARE
-========================= */
-const authenticate = (req, res, next) => {
-  const token = req.cookies?.token;
-  if (!token) return res.status(401).json({ message: "No token provided." });
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.id;
-    next();
-  } catch (err) {
-    return res.status(401).json({ message: "Invalid or expired token." });
-  }
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
-app.get("/", (req, res) => res.send("Server running..."));
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.CLIENT_URL,
+].filter(Boolean);
 
-/* ---------- SIGNUP ---------- */
+// Middlewares
+app.use(express.json());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked: ${origin}`));
+      }
+    },
+    credentials: true,
+  })
+);
+
+app.get("/", (req, res) => {
+  res.send("Subscribe To My Channel!");
+});
+
 app.post("/api/signup", async (req, res) => {
+  const { username, email, password } = req.body;
   try {
-    const { username, email, password } = req.body;
-
-    if (!username || !email || !password)
-      return res.status(400).json({ message: "All fields are required." });
-
-    if (password.length < 6)
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
-
-    if (await User.findOne({ email }))
-      return res.status(400).json({ message: "Email already in use." });
-
-    if (await User.findOne({ username }))
-      return res.status(400).json({ message: "Username already taken." });
-
+    if (!username || !email || !password) {
+      throw new Error("All fields are required!");
+    }
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      return res.status(400).json({ message: "User already exists." });
+    }
+    const usernameExists = await User.findOne({ username });
+    if (usernameExists) {
+      return res.status(400).json({ message: "Username is taken, try another name." });
+    }
     const hashedPassword = await bcryptjs.hash(password, 10);
     const userDoc = await User.create({ username, email, password: hashedPassword });
 
-    const token = jwt.sign({ id: userDoc._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    if (userDoc) {
+      const token = jwt.sign({ id: userDoc._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+      res.cookie("token", token, cookieOptions);
+    }
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    const { password: _, ...user } = userDoc.toObject();
-    res.status(201).json({ user, message: "Signup successful" });
-  } catch (err) {
-    console.error("Signup error:", err);
-    res.status(500).json({ message: "Server error during signup" });
+    return res.status(200).json({ user: userDoc, message: "User created successfully." });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 });
 
-/* ---------- LOGIN ---------- */
 app.post("/api/login", async (req, res) => {
+  const { username, password } = req.body;
   try {
-    const { username, password } = req.body;
-
-    if (!username || !password)
-      return res.status(400).json({ message: "All fields are required" });
-
     const userDoc = await User.findOne({ username });
-    if (!userDoc) return res.status(400).json({ message: "Invalid credentials" });
+    if (!userDoc) {
+      return res.status(400).json({ message: "Invalid credentials." });
+    }
+    const isPasswordValid = bcryptjs.compareSync(password, userDoc.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: "Invalid credentials." });
+    }
 
-    const valid = await bcryptjs.compare(password, userDoc.password);
-    if (!valid) return res.status(400).json({ message: "Invalid credentials" });
+    if (userDoc) {
+      const token = jwt.sign({ id: userDoc._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+      res.cookie("token", token, cookieOptions);
+    }
 
-    const token = jwt.sign({ id: userDoc._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    const { password: _, ...user } = userDoc.toObject();
-    res.json({ user, message: "Login successful" });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ message: "Server error during login" });
+    return res.status(200).json({ user: userDoc, message: "Logged in successfully." });
+  } catch (error) {
+    console.log("Error Logging in: ", error.message);
+    res.status(400).json({ message: error.message });
   }
 });
 
-/* ---------- FETCH USER ---------- */
-app.get("/api/fetch-user", authenticate, async (req, res) => {
+app.get("/api/fetch-user", async (req, res) => {
+  const { token } = req.cookies;
+  if (!token) {
+    return res.status(401).json({ message: "No token provided." });
+  }
   try {
-    const user = await User.findById(req.userId).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found." });
-    res.json({ user });
-  } catch (err) {
-    console.error("Fetch user error:", err);
-    res.status(500).json({ message: "Server error" });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+    const userDoc = await User.findById(decoded.id).select("-password");
+    if (!userDoc) {
+      return res.status(400).json({ message: "No user found." });
+    }
+    res.status(200).json({ user: userDoc });
+  } catch (error) {
+    console.log("Error in fetching user: ", error.message);
+    return res.status(400).json({ message: error.message });
   }
 });
 
-/* ---------- LOGOUT ---------- */
-app.post("/api/logout", (req, res) => {
-  res.clearCookie("token");
-  res.json({ message: "Logged out successfully" });
+app.post("/api/logout", async (req, res) => {
+  res.clearCookie("token", cookieOptions);
+  res.status(200).json({ message: "Logged out successfully" });
 });
 
-/* =========================
-   🚀 START SERVER
-========================= */
-connectToDB()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("Failed to connect to database:", err);
-    process.exit(1);
-  });
+app.listen(PORT, () => {
+  connectToDB();
+  console.log(`Server is running on http://localhost:${PORT}`);
+});

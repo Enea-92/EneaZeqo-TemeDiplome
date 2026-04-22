@@ -38,7 +38,7 @@ const Navbar = () => {
 <img
   src={Logo}
   alt="Logo"
-  className="w-80 h-20 object-contain cursor-pointer brightness-125"
+  className="w-20 h-20 object-contain cursor-pointer brightness-125 mr-auto"
 />
       </Link>
 
